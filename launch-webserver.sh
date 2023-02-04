@@ -72,22 +72,23 @@ case "$1" in
         		&& echo -e "Nginx requirement files:\t\e[32mOK\e[0m" \
         		|| echo -e "Nginx requirement files:\t\e[31mFailed\e[0m"
 		sleep 0.032
+                $(systemctl status docker.service &> /dev/null) \
+                        && echo -e "Docker installed:\t\t\e[32mOK\e[0m" \
+                        || echo -e "Docker installed:\t\t\e[31mFailed\e[0m\t\t[ try <$0 docker> ]"
+
+		sleep 0.032
 		$(systemctl status docker &> /dev/null) \
         		&& echo -e "Docker status:\t\t\t\e[32mOK\e[0m" \
-        		|| echo -e "Docker status:\t\t\t\e[31mFailed\e[0m\t\t[ try <$0 install> to install docker ]"
+        		|| echo -e "Docker status:\t\t\t\e[31mFailed\e[0m\t\t[ try <$0 docker> ]"
 		sleep 0.032
 		$(systemctl status nginx.service &> /dev/null) \
 			&& echo -e "Nginx installed:\t\t\e[32mOK\e[0m" \
-                        || echo -e "Nginx installed:\t\t\e[31mFailed\e[0m\t\t[ try <$0 install> to install nginx ]"
-		sleep 0.032
-                $(systemctl status docker.service &> /dev/null) \
-                        && echo -e "Docker installed:\t\t\e[32mOK\e[0m" \
-                        || echo -e "Docker installed:\t\t\e[31mFailed\e[0m\t\t[ try <$0 install> to install docker ]"
+                        || echo -e "Nginx installed:\t\t\e[31mFailed\e[0m\t\t[ try <$0 nginx> ]"
 		
 		
 		printf "\n"
 	;;
-	"host-install")
+	"nginx")
 		sleep 0.032
 		# shows the error if nginx binary is not found in system
 		if [ "$(id -u)" = "0" ]; then
@@ -126,7 +127,7 @@ case "$1" in
 		
 
 	;;
-        "star-container")
+        "docker")
                 sleep 0.032
                 # shows the error if nginx binary is not found in system
                 if [ "$(id -u)" = "0" ]; then
