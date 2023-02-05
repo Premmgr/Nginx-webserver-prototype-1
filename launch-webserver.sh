@@ -72,19 +72,26 @@ case "$1" in
         		&& echo -e "Nginx requirement files:\t\e[32mOK\e[0m" \
         		|| echo -e "Nginx requirement files:\t\e[31mFailed\e[0m"
 		sleep 0.032
-                $(systemctl status docker.service &> /dev/null) \
-                        && echo -e "Docker installed:\t\t\e[32mOK\e[0m" \
-                        || echo -e "Docker installed:\t\t\e[31mFailed\e[0m\t\t[ try <$0 docker> ]"
+                $(which docker &> /dev/null) \
+                        && echo -e "Docker installed:\t\t\e[32mOK\e[0m\t\t\t[ Docker version: $(docker version | grep Version | head -1 | cut -d ':' -f2 | xargs) ]" \
+                        || echo -e "Docker installed:\t\t\e[31mFailed\e[0m\t\t\t[ try <$0 docker> ]"
 
 		sleep 0.032
 		$(systemctl status docker &> /dev/null) \
-        		&& echo -e "Docker status:\t\t\t\e[32mOK\e[0m" \
-        		|| echo -e "Docker status:\t\t\t\e[31mFailed\e[0m\t\t[ try <$0 docker> ]"
+			&& echo -e "Docker status:\t\t\t\e[32mOK\e[0m\t\t\t[ \e[32mRunning\e[0m ]" \
+        		|| echo -e "Docker status:\t\t\t\e[31mFailed\e[0m\t\t\t[ \e[32mNot running\e[0m ]"
 		sleep 0.032
 		$(systemctl status nginx.service &> /dev/null) \
-			&& echo -e "Nginx installed:\t\t\e[32mOK\e[0m" \
-                        || echo -e "Nginx installed:\t\t\e[31mFailed\e[0m\t\t[ try <$0 nginx> ]"
-		
+			&& echo -e "Host nginx installed:\t\t\e[32mOK\e[0m" \
+                        || echo -e "Host nginx installed:\t\t\e[33mNot installed\e[0m\t\t[ try <$0 nginx> ]"
+		sleep 0.032
+                
+		if [[ $(lsb_release -a 2> /dev/null| xargs | grep -i ubuntu &> /dev/null && echo $?) = '0' ]]
+		then
+			echo -e "Supported Os:\t\t\t\e[32mOK\e[0m\t\t\t[ $(lsb_release -a 2> /dev/null | grep Description | cut -d ':' -f2 | xargs) ]"
+		else
+			echo -e "Supported Os:\t\t\e[33mFailed\e[0m\t\t[ try <cat /etc/os_release> ]"
+		fi		
 		
 		printf "\n"
 	;;
