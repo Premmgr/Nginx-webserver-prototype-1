@@ -67,7 +67,7 @@ build_container(){
 	${f_delete_image}
 	echo ""
 	echo "building docker container from Dockerfile..."
-	docker build -t ${container_name}:latest . --no-cache && echo -e "${GREEN}Build process completed\n"
+	docker build -t ${container_name} . --no-cache && echo -e "${GREEN}Build process completed\n"
 
 }
 f_build_container=build_container
