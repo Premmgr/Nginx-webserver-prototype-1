@@ -1,0 +1,131 @@
+#!/bin/bash
+# colors
+RED="\e[31m"
+GREEN="\e[32m"
+BLUE="\e[33m"
+PURPLE="\e[35m"
+YELLOW="\e[33m"
+EC="\e[0m"
+DATE="$(date +'%d-%m-%Y')"
+log_dir="logs"
+
+# variables
+
+# function section
+
+# timestpame
+timestamp(){
+	while read line; do
+		echo $(date)":"$line;
+	done
+}
+f_timestamp=timestamp
+
+# function that installs docker
+install_docker(){
+	if [ "$(id -u)" = "0" ]
+	then
+		echo "installing docker..."
+		apt update && apt install apt-transport-https ca-certificates curl software-properties-common -y
+		curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+		echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+		apt update -y
+		apt install docker-ce -y
+		systemctl enable docker &> /dev/null && systemct start docker &> /dev/null
+		systemctl status docker &> /dev/null && printf "\e[32mdocker installed\e[0m\n" ; exit 0
+		systemctl status docker &> /dev/null || printf "\e[31Error while installing docker\e[0m\n" ; exit 1
+	else
+		printf "\e[31mError\e[0m, root permission required to install docker\n"
+	fi
+}
+
+f_install_docker=install_docker
+
+
+# function that installs nignx
+install_nginx(){
+	if [ "$(id -u)" = "0" ]
+	then
+		echo "installting nginx..."
+		set -e
+		apt update -y && apt install nginx -y
+		systemctl restart nginx.service
+		systemctl enable nginx
+		systemctl status nginx.service && printf "\e[32mnginx installed\e[0m\n" ; exit 0
+		systemctl status nginx.service || printf "\e[31mError while installing nginx\e[0m\n" ; exit 1
+	else
+		printf "\e[31mError\e[0m, root permission required to install docker\n"
+	fi
+}
+f_install_nginx=install_nginx
+
+
+# function that build docker container out of Dockerfile
+container_name="webserver"
+build_container(){
+	sleep 0.033
+	${f_delete_image}
+	echo ""
+	echo "building docker container from Dockerfile..."
+	docker build -t ${container_name}:latest . --no-cache && echo -e "${GREEN}Build process completed\n"
+
+}
+f_build_container=build_container
+
+
+# deletes the image upon function call
+delete_image(){
+	list_image="$(docker images | grep ${container_name})"
+	if [[ ${list_image} ]]
+	then
+		printf "\n${PURPLE}found previously built image${EC}:\n${list_image}\n"
+		read -p "previosly built image will be deleted, continue? [y/n]: " list_response
+		if	[[ ${list_response} == 'y' ]]
+		then
+			printf "${RED}removing old built image...${EC}"
+			sleep 0.033
+			docker images | grep ${container_name} | awk '{print $3}'| xargs docker rmi -f
+		else
+			printf "aborted build process!"
+		fi
+	fi
+
+}
+f_delete_image=delete_image
+# function that starts container
+start_container(){
+	sleep 0.033
+	find_container="$(docker images | grep ${container_name})"
+	ps_container="$(docker ps -a | grep ${container_name})"
+	if [[ ${find_container} ]]
+	then
+		set -e
+		docker-compose down &>> logs/compose-log-${DATE}
+		docker-compose up -d &>> logs/compose-log-${DATE}
+		docker logs -f ${container_name} &>> logs/webserver-"${DATE}".log &
+		printf "${GREEN}${container_name} container is up${EC}\n"
+		exit 0
+	else
+		printf "${RED}Could not find docker image named: ${container_name}${EC}\n"
+		printf "start by [$0 install container]\n"
+		exit 1
+	fi
+}
+f_start_container=start_container
+
+
+# down the running container
+
+down_container(){
+        sleep 0.033
+        ps_container="$(docker ps -a | grep ${container_name})"
+        if [[ ${ps_container} ]]
+        then
+                docker-compose down &>> logs/compose-log-${DATE}
+                printf "bringing down the webserver instance...\n"
+		${ps_container} &> /dev/null || echo -e "${GREEN}webserver successfuly halted!${EC}\n"
+        else
+                printf "${container_name} is already down\n"
+        fi
+}
+f_down_container=down_container
