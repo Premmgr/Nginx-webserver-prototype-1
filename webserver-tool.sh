@@ -82,7 +82,7 @@ case "$1" in
         		|| echo -e "Docker status:\t\t\t\e[31mNot running\e[0m\t\t\t[ \e[32mFailed\e[0m ]"
 		sleep 0.032
 		$(systemctl status nginx.service &> /dev/null) \
-			&& echo -e "Host nginx :\t\t\e[32mRunning\e[0m" \
+			&& echo -e "Host nginx :\t\t\t\e[32mRunning\e[0m" \
                         || echo -e "Host nginx :\t\t\t\e[33mNot running\e[0m\t\t[ try <$0 nginx> ]"
 		sleep 0.032
                 
