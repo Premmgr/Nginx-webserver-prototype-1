@@ -8,10 +8,12 @@ YELLOW="\e[33m"
 EC="\e[0m"
 DATE="$(date +'%d-%m-%Y')"
 log_dir="logs"
+slp="sleep 0.033"
 
 # variables
 
 # function section
+
 
 # timestpame
 timestamp(){
@@ -79,7 +81,7 @@ delete_image(){
 	if [[ ${list_image} ]]
 	then
 		printf "\n${PURPLE}found previously built image${EC}:\n${list_image}\n"
-		read -p "previosly built image will be deleted, continue? [y/n]: " list_response
+		read -p "previously built image will be deleted, continue? [y/n]: " list_response
 		if	[[ ${list_response} == 'y' ]]
 		then
 			printf "${RED}removing old built image...${EC}"
@@ -129,3 +131,74 @@ down_container(){
         fi
 }
 f_down_container=down_container
+
+
+# variables nginx
+status_nginx="systemctl status nginx.service"
+restart_nginx="systemctl restart nginx.service"
+nginx_conf_path="/etc/nginx"
+custom_nginx_conf="conf/host_nginx.conf"
+app_data_path="$(pwd)/app_data"
+app_default_conf="conf/default.conf"
+default_nginx_path="/usr/share/nginx/html"
+
+# nginx functions
+remove_default_conf(){
+	if [[ -e /etc/nginx/sites-enabled/default ]]
+	then
+		 rm /etc/nginx/sites-enabled/default && echo "site-enabled default.conf removed" &>> ${log_dir}/script.log
+	 else
+		 echo "no site-enabled default, so not removed" &>> ${log_dir}/script.log
+	fi
+
+}
+f_remove_default_conf=remove_default_conf
+
+hostweb_nginx(){
+	set -e
+	# checks if the nginx is installed
+	${f_install_nginx}
+
+	# creates the tar file of app_data
+	tar -czf app_data.tar.gz app_data &>> logs/tarlogs ; echo "--------------${DATE}-------------" >> logs/tarlogs
+	# removes the deafult conf file in site-available
+	${f_remove_default_conf}
+
+	# creates nginx.conf backup
+	mv ${nginx_conf_path}/nginx.conf ${nginx_conf_path}/nginx.conf_bak${DATE} 
+	
+	# copies custom_config to /nginx/conf location
+	cp ${custom_nginx_conf} ${nginx_conf_path}/nginx.conf
+	
+	# copies default nginx configuration to /etc/nginx/conf.d location
+	${slp}
+	cp ${app_default_conf} ${nginx_conf_path}/conf.d
+	
+	# changes default confile mode to 644 
+	${slp}
+	chmod 644 ${nginx_conf_path}/conf.d/default.conf
+	
+	# extract application data to /usr/share/nginx/html path
+	tar -xvf app_data.tar.gz -C ${default_nginx_path} &>> logs/tarlogs 
+	
+	# restart the nginx
+	${restart_nginx} && ${rest_val}
+
+
+}
+f_hostweb_nginx=hostweb_nginx
+
+install_nginx(){
+	if [[ $(which nginx) ]]
+	then
+		printf "nginx: ${GREN}OK${EC}\n"
+	else
+		printf "installing nginx"
+		apt remove --purge nginx* -y &> /dev/null
+		apt remove --purge nginx-common -y &> /dev/null
+		apt update && apt install nginx -y
+	fi
+
+}
+f_install_nginx=install_nginx
+
