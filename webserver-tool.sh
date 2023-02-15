@@ -6,8 +6,6 @@ code_owner="prem gharti"
 
 source utilscript
 
-
-
 # subcommand section
 case "$1" in
 	"help")
@@ -22,10 +20,11 @@ case "$1" in
                         "container")
                                 ${f_start_container}
                         ;;
+
                         "host")
-                                echo "starting web server on the host..."
-                                ${f_hostweb}
-                        ;;
+                                
+				${f_hostweb_nginx} && printf "${GREEN}weserver is up and running${EC}\n"; printf "webserver root path:\t${default_nginx_path}/app_data\nwebserver running on:\t${GREEN}Host${EC}\n"
+				;;
                         "--help")
                                 printf "$0 start container  : starts webserver on docker"
 				printf "$0 start host       : starts webserver on host system"
@@ -47,8 +46,8 @@ case "$1" in
 				docker images | grep webserver:latest
 			;;
 			"host")
-				echo "starting web server on the host..."
-				${f_hostweb}
+				mkdir logs &> /dev/null
+				${f_hostweb_nginx}
 			;;
 			"--help")
 				printf "$0 install container  : starts webserver on docker"
@@ -68,9 +67,13 @@ case "$1" in
 		$(cat docker-compose.yml 2> /dev/null | grep nginx:alpine &> /dev/null) ; $(cat Dockerfile | grep nginx:alpine &> /dev/null) \
         		&& echo -e "Docker requirement files:\t\e[32mOK\e[0m" || echo -e "Docker requirement files:\t\e[31mFailed\e[0m\t\t[ verify docker-compose.yml file in $(pwd) ]"
 		sleep 0.032
-		$(cat nginx.conf 2> /dev/null | grep root &> /dev/null) \
-        		&& echo -e "Nginx requirement files:\t\e[32mOK\e[0m" \
-        		|| echo -e "Nginx requirement files:\t\e[31mFailed\e[0m"
+		$(cat conf/default.conf 2> /dev/null | grep root &> /dev/null) \
+        		&& echo -e "Nginx defult conf files:\t\e[32mOK\e[0m" \
+        		|| echo -e "Nginx defult conf files:\t\e[31mFailed\e[0m"
+		sleep 0.032
+                $(cat conf/default.conf 2> /dev/null | grep root &> /dev/null) \
+                        && echo -e "nginx.conf files:\t\t\e[32mOK\e[0m" \
+                        || echo -e "nginx.conf files:\t\t\e[31mFailed\e[0m"
 		sleep 0.032
                 $(which docker &> /dev/null) \
                         && echo -e "Docker installed:\t\t\e[32mOK\e[0m\t\t\t[ Docker version: $(docker version | grep Version | head -1 | cut -d ':' -f2 | xargs) ]" \
