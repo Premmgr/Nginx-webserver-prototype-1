@@ -66,7 +66,7 @@ f_install_nginx=install_nginx
 container_name="webserver"
 build_container(){
 	sleep 0.033
-	${f_delete_image}
+	#${f_delete_image}
 	echo ""
 	echo "building docker container from Dockerfile..."
 	docker build -t ${container_name} . --no-cache && echo -e "${GREEN}Build process completed${EC}\n"

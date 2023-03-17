@@ -41,7 +41,6 @@ case "$1" in
 				echo "starting preparation for web server in docker"
 				echo ""
 				mkdir logs &> /dev/null
-				${f_down_container}
 				${f_build_container}
 				docker images | grep webserver:latest
 			;;
